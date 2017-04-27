@@ -70,8 +70,8 @@ def importAsc(asc_file_name):
     # Lines after this are the height data
     heights = [list(map(float, l.rstrip().split(" "))) for l in lines[6:]]
 
-    # Some values need to be excluded
-    exclude = [-0.9]
+    # Some values may need to be excluded
+    exclude = []
 
     height_cell = HeightCell(dimensions, heights, exclude)
 
