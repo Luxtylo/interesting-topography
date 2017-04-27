@@ -17,6 +17,7 @@ each of the grid squares. The important one of these is the .asc file
 """
 
 from PIL import Image
+import os
 
 
 class HeightCell:
@@ -97,12 +98,25 @@ def saveCellAsImage(cell, image_name):
 
 
 if __name__ == "__main__":
+    base_dirname = "./OS - terr50_gagg_gb/data"
     # Allow user to choose a square from the national grid
+    valid_square_names = sorted(os.listdir(base_dirname))
+
+    print("OS National Grid squares:")
+    for a, b, c, d in zip(valid_square_names[::4], valid_square_names[1::4],
+                          valid_square_names[2::4], valid_square_names[3::4]):
+        print("{}, {}, {}, {}".format(a, b, c, d))
+
+    square_name = input("Enter a square name: ").lower()
+
+    if square_name not in valid_square_names:
+        raise ValueError("Not a valid square name")
+
     # Unzip all of that square's data (cells) into a temp folder
     # Import the cells as HeightCell objects
     # Add the HeightCell info to a large grid and save an image
 
     # Import individual cell and display as image
-    file_name = "OS - terr50_gagg_gb/data/hp/hp40_OST50GRID_20160726/HP40.asc"
-    cell = importAsc(file_name)
-    saveCellAsImage(cell, "test.png")
+    #file_name = "OS - terr50_gagg_gb/data/hp/hp40_OST50GRID_20160726/HP40.asc"
+    #cell = importAsc(file_name)
+    #saveCellAsImage(cell, "test.png")
