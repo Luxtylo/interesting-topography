@@ -98,10 +98,11 @@ def saveCellAsImage(cell, image_name):
     img.save(image_name)
 
 
-if __name__ == "__main__":
-    base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
-    #base_dirname = "./OS - terr50_gagg_gb/data"
-    # Allow user to choose a square from the national grid
+def chooseSquare(base_dir):
+    """
+    Choose one of the 100x100km squares from the OS National Grid
+    Prompts the user to enter the two-letter name of the chosen square
+    """
     valid_square_names = sorted(os.listdir(base_dir))
 
     print("OS National Grid squares:")
@@ -114,12 +115,20 @@ if __name__ == "__main__":
     if square_name not in valid_square_names:
         raise ValueError("Not a valid square name")
 
-    # Unzip all of that square's data (cells) into a temp folder
-    square_base_dir = os.path.join(base_dir, square_name)
-    map_data_dir = os.path.join(".", "map_data")
+    return square_name
 
-    # Iterate through all of the files and extract .asc files from .zips
-    # Files go to map_data_dir
+
+def extractAscsFromSquare(base_dir, tmp_dir, square_name):
+    """
+    Extract all .asc files from the .zip files in the chosen square
+    The files are extracted into tmp_dir
+
+    Returns list of the file names
+    """
+    square_base_dir = os.path.join(base_dir, square_name)
+
+    file_names = []
+
     for item in os.listdir(square_base_dir):
         if not item.endswith(".zip"):
             continue    # Skip non-zip files
@@ -131,12 +140,23 @@ if __name__ == "__main__":
             asc_files = filter(lambda f: f.endswith(".asc"), contents)
 
             for asc_file in asc_files:
-                zip_ref.extract(asc_file, map_data_dir)
+                zip_ref.extract(asc_file, tmp_dir)
+                file_names.append(asc_file)
+
+    return sorted(file_names)
+
+
+if __name__ == "__main__":
+    base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
+    map_data_dir = os.path.join(".", "map_data")
+
+    square_name = chooseSquare(base_dir)
+    asc_files = extractAscsFromSquare(base_dir, map_data_dir, square_name)
 
     # Import the cells as HeightCell objects
     # Add the HeightCell info to a large grid and save an image
 
     # Import individual cell and display as image
-    #file_name = "OS - terr50_gagg_gb/data/hp/hp40_OST50GRID_20160726/HP40.asc"
-    #cell = importAsc(file_name)
-    #saveCellAsImage(cell, "test.png")
+    file_name = os.path.join(map_data_dir, asc_files[1])
+    cell = importAsc(file_name)
+    saveCellAsImage(cell, "test.png")
