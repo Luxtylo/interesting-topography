@@ -17,6 +17,7 @@ each of the grid squares. The important one of these is the .asc file
 """
 
 from PIL import Image
+import zipfile
 import os
 
 
@@ -98,9 +99,10 @@ def saveCellAsImage(cell, image_name):
 
 
 if __name__ == "__main__":
-    base_dirname = "./OS - terr50_gagg_gb/data"
+    base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
+    #base_dirname = "./OS - terr50_gagg_gb/data"
     # Allow user to choose a square from the national grid
-    valid_square_names = sorted(os.listdir(base_dirname))
+    valid_square_names = sorted(os.listdir(base_dir))
 
     print("OS National Grid squares:")
     for a, b, c, d in zip(valid_square_names[::4], valid_square_names[1::4],
@@ -113,6 +115,24 @@ if __name__ == "__main__":
         raise ValueError("Not a valid square name")
 
     # Unzip all of that square's data (cells) into a temp folder
+    square_base_dir = os.path.join(base_dir, square_name)
+    map_data_dir = os.path.join(".", "map_data")
+
+    # Iterate through all of the files and extract .asc files from .zips
+    # Files go to map_data_dir
+    for item in os.listdir(square_base_dir):
+        if not item.endswith(".zip"):
+            continue    # Skip non-zip files
+
+        item_path = os.path.join(square_base_dir, item)
+
+        with zipfile.ZipFile(item_path, "r") as zip_ref:
+            contents = zip_ref.namelist()
+            asc_files = filter(lambda f: f.endswith(".asc"), contents)
+
+            for asc_file in asc_files:
+                zip_ref.extract(asc_file, map_data_dir)
+
     # Import the cells as HeightCell objects
     # Add the HeightCell info to a large grid and save an image
 
