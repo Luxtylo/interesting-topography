@@ -66,12 +66,11 @@ def importAsc(asc_file_name):
     with open(asc_file_name, "r") as asc_file:
         lines = asc_file.readlines()
 
-
     # First 5 lines are dimensions
     dimensions = (int(l.split(" ")[-1]) for l in lines[:5])
 
     # Lines after this are the height data
-    heights = [list(map(float, l.rstrip().split(" "))) for l in lines[6:]]
+    heights = [list(map(float, l.rstrip().split(" "))) for l in lines[5:]]
 
     # Some values may need to be excluded
     exclude = []
