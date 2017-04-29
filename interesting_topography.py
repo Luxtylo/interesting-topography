@@ -112,12 +112,15 @@ def chooseSquare(base_dir):
                           valid_square_names[2::4], valid_square_names[3::4]):
         print("{}, {}, {}, {}".format(a, b, c, d))
 
-    square_name = input("Enter a square name: ").lower()
+    square_name = input("Enter a square name, or multiple space-separated:\n")
 
-    if square_name not in valid_square_names:
-        raise ValueError("Not a valid square name")
+    square_names = square_name.lower().split(" ")
 
-    return square_name
+    for name in square_names:
+        if name not in valid_square_names:
+            raise ValueError("\"{}\" not a valid square name".format(name))
+
+    return square_names
 
 
 def extractAscsFromSquare(base_dir, tmp_dir, square_name):
@@ -245,12 +248,14 @@ def combineCells(height_cells):
     return heights_combined
 
 
-def makeImage(base_dir, map_data_dir, image_name, square_name):
+def makeImage(base_dir, map_data_dir, image_name, square_names):
     """
     Generate an image from the chosen square
     """
 
-    asc_files = extractAscsFromSquare(base_dir, map_data_dir, square_name)
+    asc_files = []
+    for square in square_names:
+        asc_files.extend(extractAscsFromSquare(base_dir, map_data_dir, square))
 
     # Import the cells as HeightCell objects
     height_cells = extractCellDataFromAscs(map_data_dir, asc_files)
@@ -279,7 +284,7 @@ def interactiveMakeImage(base_dir, map_data_dir, image_name):
     Interactively select grid squares and generate an image
     """
 
-    square_name = chooseSquare(base_dir)
+    square_names = chooseSquare(base_dir)
 
     image_name_new = input(
             "Image name (default=\"{}\"): ".format(image_name))
@@ -287,7 +292,7 @@ def interactiveMakeImage(base_dir, map_data_dir, image_name):
     if image_name_new != "":
         image_name = image_name_new
 
-    makeImage(base_dir, map_data_dir, image_name, square_name)
+    makeImage(base_dir, map_data_dir, image_name, square_names)
 
 
 if __name__ == "__main__":
