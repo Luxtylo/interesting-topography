@@ -149,6 +149,15 @@ def extractAscsFromSquare(base_dir, tmp_dir, square_name):
     return sorted(file_names)
 
 
+def extractCellDataFromAscs(map_data_dir, asc_list):
+    """
+    Return HeightCell instances for all .asc files in asc_list
+    The asc files should be in map_data_dir already
+    """
+
+    return [importAsc(os.path.join(map_data_dir, a)) for a in asc_list]
+
+
 if __name__ == "__main__":
     base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
     map_data_dir = os.path.join(".", "map_data")
@@ -157,15 +166,13 @@ if __name__ == "__main__":
     asc_files = extractAscsFromSquare(base_dir, map_data_dir, square_name)
 
     # Import the cells as HeightCell objects
-    height_cells = []
+    height_cells = extractCellDataFromAscs(map_data_dir, asc_files)
+
+    # Setup image grid parameters
     cell_size = 10000           # In metres
     measurement_interval = 50   # 50m per measurement
     cell_side = cell_size / measurement_interval
     cell_res = cell_side ** 2
-
-    for asc in asc_files:
-        file_name = os.path.join(map_data_dir, asc)
-        height_cells.append(importAsc(file_name))
 
     # Add the HeightCell info to a large grid and save an image
     # Lower left corner coords
