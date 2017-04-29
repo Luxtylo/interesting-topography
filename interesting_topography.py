@@ -158,6 +158,94 @@ def extractCellDataFromAscs(map_data_dir, asc_list):
     return [importAsc(os.path.join(map_data_dir, a)) for a in asc_list]
 
 
+def getDimensions(height_cells):
+    """
+    Get dimensions needed for scaling
+    Return dict:
+        cell_size   = Cell size in metres
+        cell_side   = Number of measurements (pixels) along one side of a cell
+        cell_rows   = Number of rows of cells in the image
+        img_width   = Width in pixels of the output image
+        img_height  = Height in pixels of the output image
+        min_x       = Minimum x coordinate (metres)
+        min_y       = Minimum y coordinate (metres)
+    """
+    # Setup image grid parameters
+    cell_size = 10000           # In metres
+    measurement_interval = 50   # 50m per measurement
+    cell_side = cell_size / measurement_interval
+    cell_res = cell_side ** 2
+
+    # Get image dimensions from real-life size
+    x_corners = [c.xcorner for c in height_cells]
+    y_corners = [c.ycorner for c in height_cells]
+    max_x = max(x_corners) + cell_size
+    max_y = max(y_corners) + cell_size
+    min_x = min(x_corners)
+    min_y = min(y_corners)
+
+    ground_width = (max_x - min_x)
+    ground_height = (max_y - min_y)
+    cell_cols = ground_width // cell_size
+    cell_rows = ground_width // cell_size
+    img_width = int(ground_width * cell_side // cell_size)
+    img_height = int(ground_height * cell_side // cell_size)
+
+    return {"cell_size": cell_size,
+            "cell_side": cell_side,
+            "cell_rows": cell_rows,
+            "img_width": img_width,
+            "img_height": img_height,
+            "min_x": min_x,
+            "min_y": min_y,
+            "max_y": max_y}
+
+
+def scaleHeightData(heights):
+    """
+    Scale height data from its current range to 0-255 for image output
+    """
+
+    min_height = heights.min()
+
+    # Shift any negative values up
+    if min_height < 0:
+        heights -= min_height
+
+    # Scale heights to 255
+    heights *= 255.0 / heights.max()
+    return heights
+
+
+def combineCells(height_cells):
+    """
+    Combine all height cells into one array and return it
+    """
+
+    dims = getDimensions(height_cells)
+
+    # Use zero for default height (sea)
+    heights_combined = np.zeros((dims["img_height"], dims["img_width"]))
+
+    for cell in height_cells:
+        # Get the start x and y indices of the cell
+        cell_col = (cell.xcorner - dims["min_x"]) / dims["cell_size"]
+        cell_row = (dims["max_y"] - cell.ycorner) / dims["cell_size"] - 1
+        cell_start_x = int(cell_col * dims["cell_side"])
+        cell_start_y = int(cell_row * dims["cell_side"])
+
+        # Add actual height data to heights_combined
+        for row, row_data in enumerate(cell.heights):
+            for col, h in enumerate(row_data):
+                # Get the pixel locations of this pixel
+                px_col = cell_start_x + col
+                px_row = cell_start_y + row
+
+                heights_combined[px_row][px_col] = h
+
+    return heights_combined
+
+
 if __name__ == "__main__":
     base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
     map_data_dir = os.path.join(".", "map_data")
@@ -168,80 +256,16 @@ if __name__ == "__main__":
     # Import the cells as HeightCell objects
     height_cells = extractCellDataFromAscs(map_data_dir, asc_files)
 
-    # Setup image grid parameters
-    cell_size = 10000           # In metres
-    measurement_interval = 50   # 50m per measurement
-    cell_side = cell_size / measurement_interval
-    cell_res = cell_side ** 2
+    # Merge all HeightCells into one array
+    heights = combineCells(height_cells)
 
-    # Add the HeightCell info to a large grid and save an image
-    # Lower left corner coords
-    x_corners = [c.xcorner for c in height_cells]
-    y_corners = [c.ycorner for c in height_cells]
-    max_x = max(x_corners) + cell_size
-    max_y = max(y_corners) + cell_size
-    min_x = min(x_corners)
-    min_y = min(y_corners)
-
-    # Image dimensions
-    ground_width = (max_x - min_x)
-    ground_height = (max_y - min_y)
-    cell_cols = ground_width // cell_size
-    cell_rows = ground_width // cell_size
-    img_width = int(ground_width * cell_side // cell_size)
-    img_height = int(ground_height * cell_side // cell_size)
-
-    # Use zero for default height (sea)
-    #heights_combined = [0] * int(img_height * img_width)
-    heights_combined = np.zeros((img_height, img_width))
-
-    for cell in height_cells:
-        # Put the cells in a grid. This creates an index starting from the
-        # bottom left, going along the bottom and up row by row
-
-        cell_col = (cell.xcorner - min_x) / cell_size
-        cell_row = (cell_rows - 1) - (cell.ycorner - min_y) / cell_size
-        cell_start_x = int(cell_col * cell_side)
-        cell_start_y = int(cell_row * cell_side)
-        #cell_idx = int(cell_row * cell_cols + cell_col)
-
-        # The start in heights_combined for the cell
-        #cell_start = int(cell_idx * cell_res)
-
-        # Add actual height data to heights_combined
-        for row, row_data in enumerate(cell.heights):
-            for col, h in enumerate(row_data):
-                #idx = cell_start + int(row * cell_side + col)
-                #heights_combined[idx] = h
-                px_col = cell_start_x + col
-                px_row = cell_start_y + row
-                heights_combined[px_row][px_col] = h
-
-    def scaleBetween(x, in_min, in_max, out_min, out_max):
-        return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
-
-    # Scale point data so it goes 0-255
-    # Excluded values are set to 0 (black)
-    min_height = heights_combined.min()
-
-    # Shift negative values up
-    if min_height < 0:
-        heights_combined -= min_height
-
-    # Scale heights to 255
-    heights_combined *= 255.0 / heights_combined.max()
-    #scaleTo255 = lambda x: scaleBetween(x, min_height, max_height, 0, 255) if x is not None else 0
-    #scaled_pixels = list(map(scaleTo255, heights_combined))
+    # Scale to 0-255
+    heights = scaleHeightData(heights)
 
     # Save image
-    img = Image.new("L", heights_combined.shape)
-    img.putdata(heights_combined.flatten())
+    img = Image.new("L", heights.shape)
+    img.putdata(heights.flatten())
     img.save("test.png")
-
-    # Import individual cell and display as image
-    #file_name = os.path.join(map_data_dir, asc_files[1])
-    #cell = importAsc(file_name)
-    #saveCellAsImage(cell, "test.png")
 
     # Remove map_data_dir so files aren't included in the next iteration
     rmtree(map_data_dir)
