@@ -262,6 +262,10 @@ def makeImage(base_dir, map_data_dir, image_name, square_name):
     # Scale to 0-255
     heights = scaleHeightData(heights)
 
+    # Ensure extension on image name
+    if not image_name.endswith(".png"):
+        image_name += ".png"
+
     # Save image
     img = Image.new("L", heights.shape)
     img.putdata(heights.flatten())
@@ -277,12 +281,19 @@ def interactiveMakeImage(base_dir, map_data_dir, image_name):
     """
 
     square_name = chooseSquare(base_dir)
+
+    image_name_new = input(
+            "Image name (default=\"{}\"): ".format(image_name))
+
+    if image_name_new != "":
+        image_name = image_name_new
+
     makeImage(base_dir, map_data_dir, image_name, square_name)
 
 
 if __name__ == "__main__":
     base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
     map_data_dir = os.path.join(".", "map_data")
-    image_name = "image.png"
+    image_name = "image"
     
     interactiveMakeImage(base_dir, map_data_dir, image_name)
