@@ -20,6 +20,8 @@ from PIL import Image
 import zipfile
 import os
 from shutil import rmtree
+from math import floor
+import numpy as np
 
 
 class HeightCell:
@@ -166,6 +168,68 @@ if __name__ == "__main__":
         height_cells.append(importAsc(file_name))
 
     # Add the HeightCell info to a large grid and save an image
+    # Lower left corner coords
+    x_corners = [c.xcorner for c in height_cells]
+    y_corners = [c.ycorner for c in height_cells]
+    max_x = max(x_corners) + cell_size
+    max_y = max(y_corners) + cell_size
+    min_x = min(x_corners)
+    min_y = min(y_corners)
+
+    # Image dimensions
+    ground_width = (max_x - min_x)
+    ground_height = (max_y - min_y)
+    cell_cols = ground_width // cell_size
+    cell_rows = ground_width // cell_size
+    img_width = int(ground_width * cell_side // cell_size)
+    img_height = int(ground_height * cell_side // cell_size)
+
+    # Use zero for default height (sea)
+    #heights_combined = [0] * int(img_height * img_width)
+    heights_combined = np.zeros((img_height, img_width))
+
+    for cell in height_cells:
+        # Put the cells in a grid. This creates an index starting from the
+        # bottom left, going along the bottom and up row by row
+
+        cell_col = (cell.xcorner - min_x) / cell_size
+        cell_row = (cell_rows - 1) - (cell.ycorner - min_y) / cell_size
+        cell_start_x = int(cell_col * cell_side)
+        cell_start_y = int(cell_row * cell_side)
+        #cell_idx = int(cell_row * cell_cols + cell_col)
+
+        # The start in heights_combined for the cell
+        #cell_start = int(cell_idx * cell_res)
+
+        # Add actual height data to heights_combined
+        for row, row_data in enumerate(cell.heights):
+            for col, h in enumerate(row_data):
+                #idx = cell_start + int(row * cell_side + col)
+                #heights_combined[idx] = h
+                px_col = cell_start_x + col
+                px_row = cell_start_y + row
+                heights_combined[px_row][px_col] = h
+
+    def scaleBetween(x, in_min, in_max, out_min, out_max):
+        return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
+
+    # Scale point data so it goes 0-255
+    # Excluded values are set to 0 (black)
+    min_height = heights_combined.min()
+
+    # Shift negative values up
+    if min_height < 0:
+        heights_combined -= min_height
+
+    # Scale heights to 255
+    heights_combined *= 255.0 / heights_combined.max()
+    #scaleTo255 = lambda x: scaleBetween(x, min_height, max_height, 0, 255) if x is not None else 0
+    #scaled_pixels = list(map(scaleTo255, heights_combined))
+
+    # Save image
+    img = Image.new("L", heights_combined.shape)
+    img.putdata(heights_combined.flatten())
+    img.save("test.png")
 
     # Import individual cell and display as image
     #file_name = os.path.join(map_data_dir, asc_files[1])
