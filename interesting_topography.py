@@ -246,11 +246,11 @@ def combineCells(height_cells):
     return heights_combined
 
 
-if __name__ == "__main__":
-    base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
-    map_data_dir = os.path.join(".", "map_data")
+def makeImage(base_dir, map_data_dir, square_name):
+    """
+    Generate an image from the chosen square
+    """
 
-    square_name = chooseSquare(base_dir)
     asc_files = extractAscsFromSquare(base_dir, map_data_dir, square_name)
 
     # Import the cells as HeightCell objects
@@ -269,3 +269,19 @@ if __name__ == "__main__":
 
     # Remove map_data_dir so files aren't included in the next iteration
     rmtree(map_data_dir)
+
+
+def interactiveMakeImage(base_dir, map_data_dir):
+    """
+    Interactively select grid squares and generate an image
+    """
+
+    square_name = chooseSquare(base_dir)
+    makeImage(base_dir, map_data_dir, square_name)
+
+
+if __name__ == "__main__":
+    base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
+    map_data_dir = os.path.join(".", "map_data")
+    
+    interactiveMakeImage(base_dir, map_data_dir)
