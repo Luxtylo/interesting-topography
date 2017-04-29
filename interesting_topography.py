@@ -155,12 +155,22 @@ if __name__ == "__main__":
     asc_files = extractAscsFromSquare(base_dir, map_data_dir, square_name)
 
     # Import the cells as HeightCell objects
+    height_cells = []
+    cell_size = 10000           # In metres
+    measurement_interval = 50   # 50m per measurement
+    cell_side = cell_size / measurement_interval
+    cell_res = cell_side ** 2
+
+    for asc in asc_files:
+        file_name = os.path.join(map_data_dir, asc)
+        height_cells.append(importAsc(file_name))
+
     # Add the HeightCell info to a large grid and save an image
 
     # Import individual cell and display as image
-    file_name = os.path.join(map_data_dir, asc_files[1])
-    cell = importAsc(file_name)
-    saveCellAsImage(cell, "test.png")
+    #file_name = os.path.join(map_data_dir, asc_files[1])
+    #cell = importAsc(file_name)
+    #saveCellAsImage(cell, "test.png")
 
     # Remove map_data_dir so files aren't included in the next iteration
     rmtree(map_data_dir)
