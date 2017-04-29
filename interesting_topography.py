@@ -271,7 +271,7 @@ def makeImage(base_dir, map_data_dir, image_name, square_names):
         image_name += ".png"
 
     # Save image
-    img = Image.new("L", heights.shape)
+    img = Image.new("L", heights.shape[::-1])
     img.putdata(heights.flatten())
     img.save(image_name)
 
