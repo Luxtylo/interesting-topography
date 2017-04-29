@@ -19,6 +19,7 @@ each of the grid squares. The important one of these is the .asc file
 from PIL import Image
 import zipfile
 import os
+from shutil import rmtree
 
 
 class HeightCell:
@@ -34,8 +35,8 @@ class HeightCell:
 
         self.xsize = cols
         self.ysize = rows
-        self.xcorner = xcorner
-        self.ycorner = ycorner
+        self.xcorner = xcorner  # Lower left corner
+        self.ycorner = ycorner  # Lower left corner
         self.size = cellsize
         self.heights = heights
         self.exclude = exclude
@@ -160,3 +161,6 @@ if __name__ == "__main__":
     file_name = os.path.join(map_data_dir, asc_files[1])
     cell = importAsc(file_name)
     saveCellAsImage(cell, "test.png")
+
+    # Remove map_data_dir so files aren't included in the next iteration
+    rmtree(map_data_dir)
