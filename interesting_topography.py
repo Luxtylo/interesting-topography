@@ -248,10 +248,13 @@ def combineCells(height_cells):
     return heights_combined
 
 
-def makeImage(base_dir, map_data_dir, image_name, square_names):
+def makeImage(base_dir, map_data_dir, image_name, square_names, verbose=False):
     """
     Generate an image from the chosen square
     """
+
+    if verbose:
+        print("Importing map squares from .asc files")
 
     asc_files = []
     for square in square_names:
@@ -260,11 +263,20 @@ def makeImage(base_dir, map_data_dir, image_name, square_names):
     # Import the cells as HeightCell objects
     height_cells = extractCellDataFromAscs(map_data_dir, asc_files)
 
+    if verbose:
+        print("Merging cells into one array")
+
     # Merge all HeightCells into one array
     heights = combineCells(height_cells)
 
+    if verbose:
+        print("Scaling to useful pixel brightness range")
+
     # Scale to 0-255
     heights = scaleHeightData(heights)
+
+    if verbose:
+        print("Saving image")
 
     # Ensure extension on image name
     if not image_name.endswith(".png"):
@@ -278,8 +290,11 @@ def makeImage(base_dir, map_data_dir, image_name, square_names):
     # Remove map_data_dir so files aren't included in the next iteration
     rmtree(map_data_dir)
 
+    if verbose:
+        print("Done!")
 
-def interactiveMakeImage(base_dir, map_data_dir, image_name):
+
+def interactiveMakeImage(base_dir, map_data_dir, image_name, verbose):
     """
     Interactively select grid squares and generate an image
     """
@@ -292,12 +307,12 @@ def interactiveMakeImage(base_dir, map_data_dir, image_name):
     if image_name_new != "":
         image_name = image_name_new
 
-    makeImage(base_dir, map_data_dir, image_name, square_names)
+    makeImage(base_dir, map_data_dir, image_name, square_names, verbose)
 
 
 if __name__ == "__main__":
     base_dir = os.path.join(".", "OS - terr50_gagg_gb", "data")
     map_data_dir = os.path.join(".", "map_data")
     image_name = "image"
-    
-    interactiveMakeImage(base_dir, map_data_dir, image_name)
+
+    interactiveMakeImage(base_dir, map_data_dir, image_name, verbose=True)
