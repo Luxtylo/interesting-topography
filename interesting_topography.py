@@ -132,6 +132,17 @@ def extractAscsFromSquare(base_dir, tmp_dir, square_name):
     """
     square_base_dir = os.path.join(base_dir, square_name)
 
+    # Find out if this square is already extracted
+    imported_asc_files = sorted(os.listdir(tmp_dir))
+    is_selected_square = (f[:2].lower() == square_name for f in imported_asc_files)
+    already_extracted = any(is_selected_square)
+
+    # No need to extract any files - just return this square's ones
+    if already_extracted:
+        return filter(lambda f: f[:2].lower() == square_name,
+                      imported_asc_files)
+
+    # Otherwise get the files from the zip file
     file_names = []
 
     for item in os.listdir(square_base_dir):
@@ -258,7 +269,9 @@ def makeImage(base_dir, map_data_dir, image_name, square_names, verbose=False):
 
     asc_files = []
     for square in square_names:
-        asc_files.extend(extractAscsFromSquare(base_dir, map_data_dir, square))
+        # Add all .asc files from this square
+        asc_files.extend(
+            extractAscsFromSquare(base_dir, map_data_dir, square))
 
     # Import the cells as HeightCell objects
     height_cells = extractCellDataFromAscs(map_data_dir, asc_files)
@@ -288,7 +301,7 @@ def makeImage(base_dir, map_data_dir, image_name, square_names, verbose=False):
     img.save(image_name)
 
     # Remove map_data_dir so files aren't included in the next iteration
-    rmtree(map_data_dir)
+    #rmtree(map_data_dir)
 
     if verbose:
         print("Done!")
